@@ -16,7 +16,11 @@ public class Population {
 	MapInteractions map;
 	Statistics stats;
 	
-	public Population(int x, Point goal, Point players, MapInteractions map, double tolerance) {
+	/*
+	 * Map-tolerance/default constructor: population needs a perception of the map they are in and also, tolerance is needed since statistics are
+	 * managed from this class
+	 */
+	public Population(int x, Point players, MapInteractions map, double tolerance) {
 		dots = new ArrayList<Dot>();
 		this.map = map;
 		populate(x, players);
@@ -24,31 +28,33 @@ public class Population {
 		stats = new Statistics(tolerance);
 	}
 	
+	/*
+	 * populate: it calls for a thread that populates the array with new, default constructed, dots
+	 */
 	public void populate(int x, Point players) {
-		int i=0;
-		for(i=0;i<x;i++) {
-			dots.add(new Dot(players, map));
-		}
+		ThreadCalculator tc = new ThreadCalculator();
+		tc.populateDots(dots, x, players, map);
 	}
 	
+	/*
+	 * render: to render all the dots, this calls ThreadClculator to create the respective render Threads
+	 */
 	public void render(Graphics g) {
-		int i;
-		int n=dots.size();
-		for(i=n-1;i>=0;i--) {
-			dots.get(i).paint(g);
-		}
+		ThreadCalculator tc = new ThreadCalculator();
+		tc.renderDots(dots, g);
 	}
 	
+	/*
+	 * render: to update all the dots, this calls ThreadClculator to create the respective update Threads
+	 */
 	public void update() {
-		/*int i;
-		int n=dots.size();
-		for(i=0;i<n;i++) {
-			dots.get(i).update();
-		}*/
 		ThreadCalculator tc = new ThreadCalculator();
 		tc.updateDots(dots);
 	}
 	
+	/*
+	 * Method that checks if all the dots are dead yet.
+	 */
 	public boolean yaSePetatearon() {
 		ListIterator<Dot> itr = dots.listIterator();
 		Dot aux;
@@ -61,11 +67,17 @@ public class Population {
 		return true;
 	}
 	
+	/*
+	 * Method that calls for thread calculator that is in charge of calculateing all dots fitness
+	 */
 	public void calculateFitness() {
 		ThreadCalculator tc = new ThreadCalculator();
 		tc.calculateFitness(dots);
 	}
 	
+	/*
+	 * Calculates the fitness sum
+	 */
 	public void calculateFitnessSum() {
 		this.fitnessSum=0.0;
 		int i;
@@ -76,38 +88,23 @@ public class Population {
 		System.out.println("Fitness sum: " + fitnessSum);
 	}
 	
+	/*
+	 * Method that calls Thread calculator to mutate dem babies
+	 */
 	public void mutateDemBeibes() {
 		ThreadCalculator tc = new ThreadCalculator();
 		tc.calculateMutations(dots);
 	}
 	
-	public void setBestDot() {
-		double max=0;
-		int maxIndex=0;
-		int i=0;
-		int n=dots.size();
-		arrive = 0;
-		for(i=0;i<n;i++) {
-			if(dots.get(i).reachedGoal) arrive++;
-			if(dots.get(i).fitness>max) {
-				maxIndex = i;
-				max = dots.get(i).fitness;
-			}
-			if(dots.get(i).fitness==max) {
-				if(dots.get(i).velocity>dots.get(maxIndex).velocity) {
-					maxIndex = i;
-					max = dots.get(i).fitness;
-				}
-			}
-		}
-		bestDot = maxIndex;
-		if(dots.get(bestDot).reachedGoal) {
-			minSteps = dots.get(bestDot).brain.step;
-			System.out.println("BestFit: "+dots.get(bestDot).fitness);
-			System.out.println("Generación "+gen+". Pasos: "+minSteps+" Llegaron: "+arrive);
-		}
-	}
-	
+	/*
+	 * Natural selection process:
+	 * it creates a new Arrey of new dots
+	 * Sorts the dots according to the fitness from high to low
+	 * sends the best route found in the generation to the stats and also the best distance
+	 * adds the best dot of this generation to the other
+	 * Calls for a thread calculator that selects the parents of the new dots and breed them
+	 * Copies the newborns into the dots array
+	 */
 	public void naturalSelection() {
 		int i;
 		int n=dots.size();

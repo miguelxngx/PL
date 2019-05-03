@@ -21,8 +21,7 @@ public class GamePanel extends JFrame implements Runnable, MouseListener, Action
     public JTextField texto;
     public int tolerance;
     /**
-     * Constructor Default Menu: Constructor default con el cual se despliega el menú de inicio 
-     del juego
+     * Constructor Default: Start the state sucession from 0 and starts the animator
      */
     public GamePanel()//Constructor Default para el menu
     {	
@@ -36,6 +35,9 @@ public class GamePanel extends JFrame implements Runnable, MouseListener, Action
         startHungerGames();
     }
     
+    /*
+     * startHungerGames: starts the animator thread wich is the one responsible of the game updating, rendering and painting
+     */
     public void startHungerGames() {
     	if(animator==null||!running) {
     		animator = new Thread(this);
@@ -43,6 +45,9 @@ public class GamePanel extends JFrame implements Runnable, MouseListener, Action
     	}
     }
     
+    /*
+     * run: method run when the thread is activated and running variable is true
+     */
     public void run(){
         running = true;
         while(running){
@@ -57,8 +62,12 @@ public class GamePanel extends JFrame implements Runnable, MouseListener, Action
         System.exit(0);
     }//run()
     
+    /*
+     * is the resposible for updating the components active on the screen
+     */
     public void gameUpdate() {
     	if(state==3) {
+    		//if there's still dots alive, the population updates, otherwise, the evolution proccess starts
 	    	if(population.yaSePetatearon()) {
 	    		//Its evolution babyyyyyyy...
 	    		population.calculateFitness();
@@ -70,6 +79,10 @@ public class GamePanel extends JFrame implements Runnable, MouseListener, Action
     	}
     }
     
+    /*
+     * is the responsible for drawing a image of the current graphic states of the components on screen, according to the state is
+     * what it renders
+     */
     private Graphics dbg;
     private Image dbImage = null;
     public void gameRender() {
@@ -109,6 +122,9 @@ public class GamePanel extends JFrame implements Runnable, MouseListener, Action
     	}
     }
     
+    /*
+     * paintScreen: is the one responsible to draw the prevously rendered image
+     */
     private void paintScreen(){
         Graphics g;
         try{
@@ -143,12 +159,12 @@ public class GamePanel extends JFrame implements Runnable, MouseListener, Action
 	@Override
 	public void mousePressed(MouseEvent e) {
 		// TODO Auto-generated method stub
-		if(this.state==1) {
+		if(state==1) {
 			players = new Point(e.getX(), e.getY());
 			state++;
 		}else if(state==2) {
 			map.setGoal(e.getX(), e.getY());
-	        population = new Population(5000, new Point(e.getX(), e.getY()), players, map, tolerance);
+	        population = new Population(5000, players, map, tolerance);
 	        state++;
 		}
 	}
@@ -170,6 +186,9 @@ public class GamePanel extends JFrame implements Runnable, MouseListener, Action
         }
 	}
 	
+	/*
+	 * when the Power method reaches the tolerance of the asymptote, it steps up the state showing the distance on the screen
+	 */
 	public static double asymptote;
 	public static synchronized void STOPALL(double a) {
 		asymptote = a;

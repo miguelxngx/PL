@@ -1,3 +1,5 @@
+import java.awt.Graphics;
+import java.awt.Point;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.Random;
@@ -6,10 +8,41 @@ import org.jfree.data.xy.XYSeries;
 
 public class ThreadCalculator {
 	
-	public FitnessCalculator fitness;
+	/*
+	 * 
+	 * This Class serves as a nest for both things:
+	 * 		-Nested thread classes that calculate stuff
+	 * 		-Auxiliary methods that calls for those nested classes
+	 * 
+	 * The way this works is:
+	 * 		1.-Auxiliary method is called
+	 * 		2.-Auxiliary method gets n(the quantity of available processors at the time) wich will serve as a thread block number
+	 * 		3.-Auxiliary method creates n thread that starts running
+	 * 		4.-Each thread is responsible of doing a value(i) per block
+	 * 		5.-Auxiliary method joins all the threads
+	 * 		6.-Auxiliary method finishes
+	 * 
+	 */
 	
 	public ThreadCalculator() {
 		
+	}
+	
+	public void populateDots(ArrayList<Dot> dots, int x, Point players, MapInteractions map) {
+		Runtime runtime = Runtime.getRuntime();
+		int n = runtime.availableProcessors();
+		PopulateCalculator fitness[]= new PopulateCalculator[n];
+		
+		for(int i=0;i<n;i++) {
+			fitness[i] = new PopulateCalculator(dots, players, map, x, i, n);
+		}
+		for(int i=0;i<n;i++) {
+			try {
+				fitness[i].join();
+			}catch(Exception e) {
+				
+			}
+		}
 	}
 	
 	public void updateDots(ArrayList<Dot> dots) {
@@ -19,6 +52,23 @@ public class ThreadCalculator {
 		int nDots = dots.size();
 		for(int i=0;i<n;i++) {
 			fitness[i] = new UpdateDotsCalculator(dots, nDots, i, n);
+		}
+		for(int i=0;i<n;i++) {
+			try {
+				fitness[i].join();
+			}catch(Exception e) {
+				
+			}
+		}
+	}
+	
+	public void renderDots(ArrayList<Dot> dots, Graphics g) {
+		Runtime runtime = Runtime.getRuntime();
+		int n = runtime.availableProcessors();
+		RenderDotsCalculator fitness[]= new RenderDotsCalculator[n];
+		int nDots = dots.size();
+		for(int i=0;i<n;i++) {
+			fitness[i] = new RenderDotsCalculator(dots, nDots, i, n, g);
 		}
 		for(int i=0;i<n;i++) {
 			try {
@@ -69,6 +119,9 @@ public class ThreadCalculator {
 		System.out.println("Mutation time: "+(stopTime-startTime));
 	}
 	
+	/*
+	 * This is the only method that doesn't work as the others, this only creates a thread that is responsible of creating the respective threads
+	 */
 	public void calculatePowerModel(ArrayList<Point2D.Double> points, XYSeries res, int nPoints,double tolerance) {
 		new PowerModelCalculator(points, res,nPoints,tolerance);
 	}
@@ -94,6 +147,32 @@ public class ThreadCalculator {
 		System.out.println("Parent selection time: "+(stopTime-startTime));
 	}
 	
+	public class PopulateCalculator extends Thread{
+		ArrayList<Dot> dots;
+		int values;
+		int nThreads;
+		int nPoints;
+		MapInteractions map;
+		Point players;
+		public PopulateCalculator(ArrayList<Dot> dots, Point players, MapInteractions map, int nPoints, int values, int nThreads) {
+			this.dots = dots;
+			this.values = values;
+			this.nThreads = nThreads;
+			this.nPoints = nPoints;
+			this.map = map;
+			this.players = players;
+			start();
+		}
+		
+		public void run() {
+			for(int i=0; i+values<nPoints; i+=nThreads) {
+				synchronized(dots) {
+					dots.add(new Dot(players, map));
+				}
+			}
+		}
+	}
+	
 	public class UpdateDotsCalculator extends Thread{
 		ArrayList<Dot> dots;
 		int values;
@@ -110,6 +189,30 @@ public class ThreadCalculator {
 		public void run() {
 			for(int i=0; i+values<nPoints; i+=nThreads) {
 				dots.get(i+values).update();
+			}
+		}
+	}
+	
+	public class RenderDotsCalculator extends Thread{
+		ArrayList<Dot> dots;
+		int values;
+		int nThreads;
+		int nPoints;
+		Graphics g;
+		public RenderDotsCalculator(ArrayList<Dot> dots, int nPoints, int values, int nThreads, Graphics g) {
+			this.dots = dots;
+			this.values = values;
+			this.nThreads = nThreads;
+			this.nPoints = nPoints;
+			this.g = g;
+			start();
+		}
+		
+		public void run() {
+			for(int i=nPoints-1; i-values>=0; i-=nThreads) {
+				synchronized(g) {
+					dots.get(i-values).paint(g);
+				}
 			}
 		}
 	}

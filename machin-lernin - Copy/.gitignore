@@ -19,3 +19,7 @@
 /ThreadCalculator.class
 /Walls.class
 /ThreadCalculator$UpdateDotsCalculator.class
+/ThreadCalculator$PupulateDots.class
+/ThreadCalculator$PupulateCalculator.class
+/ThreadCalculator$PopulateCalculator.class
+/ThreadCalculator$RenderDotsCalculator.class
