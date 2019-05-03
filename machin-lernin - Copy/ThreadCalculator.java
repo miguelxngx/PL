@@ -12,6 +12,23 @@ public class ThreadCalculator {
 		
 	}
 	
+	public void updateDots(ArrayList<Dot> dots) {
+		Runtime runtime = Runtime.getRuntime();
+		int n = runtime.availableProcessors();
+		UpdateDotsCalculator fitness[]= new UpdateDotsCalculator[n];
+		int nDots = dots.size();
+		for(int i=0;i<n;i++) {
+			fitness[i] = new UpdateDotsCalculator(dots, nDots, i, n);
+		}
+		for(int i=0;i<n;i++) {
+			try {
+				fitness[i].join();
+			}catch(Exception e) {
+				
+			}
+		}
+	}
+	
 	public void calculateFitness(ArrayList<Dot> dots) {
 		Runtime runtime = Runtime.getRuntime();
 		int n = runtime.availableProcessors();
@@ -75,6 +92,26 @@ public class ThreadCalculator {
 		}
 		long stopTime = System.currentTimeMillis();
 		System.out.println("Parent selection time: "+(stopTime-startTime));
+	}
+	
+	public class UpdateDotsCalculator extends Thread{
+		ArrayList<Dot> dots;
+		int values;
+		int nThreads;
+		int nPoints;
+		public UpdateDotsCalculator(ArrayList<Dot> dots, int nPoints, int values, int nThreads) {
+			this.dots = dots;
+			this.values = values;
+			this.nThreads = nThreads;
+			this.nPoints = nPoints;
+			start();
+		}
+		
+		public void run() {
+			for(int i=0; i+values<nPoints; i+=nThreads) {
+				dots.get(i+values).update();
+			}
+		}
 	}
 	
 	public class FitnessCalculator extends Thread{

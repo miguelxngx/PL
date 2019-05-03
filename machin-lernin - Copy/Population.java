@@ -40,11 +40,13 @@ public class Population {
 	}
 	
 	public void update() {
-		int i;
+		/*int i;
 		int n=dots.size();
 		for(i=0;i<n;i++) {
 			dots.get(i).update();
-		}
+		}*/
+		ThreadCalculator tc = new ThreadCalculator();
+		tc.updateDots(dots);
 	}
 	
 	public boolean yaSePetatearon() {
